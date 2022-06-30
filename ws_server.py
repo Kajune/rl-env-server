@@ -1,4 +1,4 @@
-import asyncio, websockets
+import asyncio, websockets, json
 import argparse
 from common import *
 
@@ -8,6 +8,8 @@ args = parser.parse_args()
 
 
 env = None
+num_connection = 0
+
 
 async def init(ws):
 	global env
@@ -20,71 +22,51 @@ async def init(ws):
 		await ws.send('NG')
 
 
-async def observation_space(ws):
+async def call_property(ws):
 	if env is None:
 		await ws.send('Must set env first via init.')
 	else:
-		await ws.send(encode(env.observation_space))
+		name = await ws.recv()
+		if hasattr(env, name):
+			await ws.send(encode(getattr(env, name)))
+		else:
+			await ws.send('env does not have property: ', name)
 
 
-async def action_space(ws):
+async def call_func(ws):
 	if env is None:
 		await ws.send('Must set env first via init.')
 	else:
-		await ws.send(encode(env.action_space))
-
-
-async def reset(ws):
-	if env is None:
-		await ws.send('Must set env first via init.')
-	else:
-		await ws.send(encode(env.reset()))
-
-
-async def step(ws):
-	if env is None:
-		await ws.send('Must set env first via init.')
-	else:
-		action = decode(await ws.recv())
-		await ws.send(encode(env.step(action)))
-
-
-async def render(ws):
-	if env is None:
-		await ws.send('Must set env first via init.')
-	else:
-		mode = await ws.recv()
-		await ws.send(encode(env.render(mode)))
-
-
-async def close(ws):
-	if env is None:
-		await ws.send('Must set env first via init.')
-	else:
-		env.close()
+		name, args = json.loads(await ws.recv())
+		args = {k: decode(v) for k, v in args.items()}
+		if hasattr(env, name):
+			await ws.send(encode(getattr(env, name)(**args)))
+		else:
+			await ws.send('env does not have function: ', name)
 
 
 async def proc(ws, path):
-	async for command in ws:
-		if command == 'test':
-			message = await ws.recv()
-			await ws.send(message)
-		elif command == 'init':
-			await init(ws)
-		elif command == 'observation_space':
-			await observation_space(ws)
-		elif command == 'action_space':
-			await action_space(ws)
-		elif command == 'reset':
-			await reset(ws)
-		elif command == 'step':
-			await step(ws)
-		elif command == 'render':
-			await render(ws)
-		elif command == 'close':
-			await close(ws)
-		else:
-			await ws.send('Unkown command: ' + command)
+	global num_connection
+	num_connection += 1
+
+	try:
+		async for command in ws:
+			if command == 'test':
+				message = await ws.recv()
+				await ws.send(message)
+			elif command == 'init':
+				await init(ws)
+			elif command == 'property':
+				await call_property(ws)
+			elif command == 'func':
+				await call_func(ws)
+			else:
+				await ws.send('Unkown command: ' + command)
+	except websockets.exceptions.ConnectionClosedError:
+		if env is not None:
+			env.close()
+
+	num_connection -= 1
 
 
 async def main(host, port):

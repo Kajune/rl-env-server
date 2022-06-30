@@ -1,4 +1,4 @@
-import websocket
+import websocket, json
 import gym, cv2
 from common import *
 
@@ -7,6 +7,10 @@ class WebSocketEnv(gym.Env):
 	def __init__(self, uri):
 		self.ws = websocket.WebSocket()
 		self.ws.connect(uri)
+
+
+	def __del__(self):
+		self.disconnect()
 
 
 	def test(self, message):
@@ -21,36 +25,45 @@ class WebSocketEnv(gym.Env):
 		print(self.ws.recv())
 
 
-	def observation_space(self):
-		self.ws.send("observation_space")
+	def call_func(self, func_name, **kwargs):
+		self.ws.send("func")
+		self.ws.send(json.dumps([func_name, {k: encode(v) for k, v in kwargs.items()}]))
 		return decode(self.ws.recv())
+
+
+	def call_property(self, property_name):
+		self.ws.send("property")
+		self.ws.send(property_name)
+		return decode(self.ws.recv())
+
+
+	def observation_space(self):
+		return self.call_property("observation_space")
 
 
 	def action_space(self):
-		self.ws.send("action_space")
-		return decode(self.ws.recv())
+		return self.call_property("action_space")
 
 
 	def reset(self):
-		self.ws.send("reset")
-		return decode(self.ws.recv())
+		return self.call_func("reset")
 
 
 	def step(self, action):
-		self.ws.send("step")
-		self.ws.send(encode(action))
-		return decode(self.ws.recv())
+		return self.call_func("step", action=action)
 
 
-	def render(self, mode = 'rgb_array'):
-		self.ws.send("render")
-		self.ws.send(mode)
-		return decode(self.ws.recv())
+	def render(self, **kwargs):
+		return self.call_func("render", **kwargs)
 
 
 	def close(self):
-		self.ws.send("close")
+		self.call_func("close")
+
+
+	def disconnect(self):
 		self.ws.close()
+
 
 
 if __name__ == '__main__':
@@ -68,12 +81,14 @@ if __name__ == '__main__':
 			action = act_space.sample()
 			obs, reward, done, info = env.step(action)
 			print(obs, reward, done, info)
-			img = env.render()
+			img = env.render(mode='rgb_array')
 
 			cv2.imshow('', img[...,::-1])
 			cv2.waitKey(1)
 			if done:
 				break
 
-	env.close()
+		env.close()
+
+	env.disconnect()
 
