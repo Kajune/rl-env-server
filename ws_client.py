@@ -5,7 +5,7 @@ from common import *
 
 class WebSocketEnv(gym.Env):
 	def __init__(self, uri):
-		self.ws = websocket.WebSocket()
+		self.ws = websocket.WebSocket(skip_utf8_validation=True)
 		self.ws.connect(uri)
 
 
