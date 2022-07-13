@@ -1,7 +1,7 @@
 import grpc
 import rl_env_server_pb2
 import rl_env_server_pb2_grpc
-import gym, cv2
+import gym, cv2, time
 from common import *
 
 
@@ -76,6 +76,7 @@ class RLEnvClient(gym.Env):
 
 
 if __name__ == '__main__':
+	start = time.time()
 	env = RLEnvClient("localhost:5000")
 
 	for env_name in ['CartPole-v1', 'MountainCar-v0', 'Pendulum-v1']:
@@ -98,3 +99,5 @@ if __name__ == '__main__':
 				break
 
 		env.close()
+
+	print('Finished in %s seconds.' % (time.time() - start))
