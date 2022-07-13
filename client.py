@@ -76,9 +76,9 @@ class RLEnvClient(gym.Env):
 
 
 if __name__ == '__main__':
-	start = time.time()
 	env = RLEnvClient("localhost:5000")
 
+	start = time.time()
 	for env_name in ['CartPole-v1', 'MountainCar-v0', 'Pendulum-v1']:
 		print(env.init(gym.make(env_name)))
 
