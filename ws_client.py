@@ -1,5 +1,5 @@
 import websocket, json
-import gym, cv2
+import gym, cv2, time
 from common import *
 
 
@@ -69,6 +69,7 @@ class WebSocketEnv(gym.Env):
 if __name__ == '__main__':
 	env = WebSocketEnv("ws://localhost:5000")
 
+	start = time.time()
 	for env_name in ['CartPole-v1', 'MountainCar-v0', 'Pendulum-v1']:
 		env.init(gym.make(env_name))
 
@@ -91,4 +92,6 @@ if __name__ == '__main__':
 		env.close()
 
 	env.disconnect()
+
+	print('Finished in %f seconds.' % (time.time() - start))
 
