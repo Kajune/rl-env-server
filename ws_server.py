@@ -70,7 +70,7 @@ async def proc(ws, path):
 
 
 async def main(host, port):
-	async with websockets.serve(proc, host, port):
+	async with websockets.serve(proc, host, port, ping_interval=10, ping_timeout=None):
 		await asyncio.Future()
 
 
