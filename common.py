@@ -2,8 +2,8 @@ import pickle, base64, zlib
 
 
 def encode(obj):
-	return base64.b64encode(zlib.compress(pickle.dumps(obj))).decode("utf-8")
+	return zlib.compress(pickle.dumps(obj))
 
 
 def decode(text):
-	return pickle.loads(zlib.decompress(base64.b64decode(text.encode())))
+	return pickle.loads(zlib.decompress(text))

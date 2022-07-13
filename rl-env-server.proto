@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package env;
+
+service RLEnvServer {
+	rpc on_connected (ConnectionRequest) returns (Void);
+	rpc on_disconnected (ConnectionRequest) returns (Void);
+	rpc numConnection (Void) returns (NumConnectionResponse);
+	rpc echo (EchoRequest) returns (EchoResponse);
+	rpc init (InitRequest) returns (InitResponse);
+	rpc func (FuncRequest) returns (FuncResponse);
+	rpc property (PropertyRequest) returns (PropertyResponse);
+}
+
+message Void {
+}
+
+message ConnectionRequest {
+	string id = 1;
+}
+
+message NumConnectionResponse {
+	int32 numConnection = 1;
+}
+
+message EchoRequest {
+	string message = 1;
+}
+
+message EchoResponse {
+	string message = 1;
+}
+
+message InitRequest {
+	bytes env = 1;
+}
+
+message InitResponse {
+	string status = 1;
+}
+
+message FuncRequest {
+	string funcName = 1;
+	bytes args = 2;
+}
+
+message FuncResponse {
+	string message = 1;
+	bytes ret = 2;
+}
+
+message PropertyRequest {
+	string propertyName = 1;
+}
+
+message PropertyResponse {
+	string message = 1;
+	bytes ret = 2;
+}
+
